@@ -88,8 +88,9 @@ Qed.
 
 Lemma pers_dup (P : iProp Σ) `{!Persistent P} : P ⊢ P ∗ P.
 Proof.
-  (* exercise *)
-Admitted.
+  iIntros "#HP".
+  by iSplitL.
+Qed.
 
 (**
   Persistent propositions satisfy a lot of nice properties simply by
@@ -173,8 +174,9 @@ Proof.
       ["#"].
     *)
     iFrame "#".
-  - (* exercise *)
-Admitted.
+  - iIntros "#[HP HQ]".
+    iFrame "#".
+Qed.
 
 (** Persistency is preserved by quantifications. *)
 
@@ -329,8 +331,23 @@ Lemma counter_spec (inc : val) :
     counter inc
   {{{ v, RET v; ⌜v = #2⌝ }}}.
 Proof.
-  (* exercise *)
-Admitted.
+  iIntros (Φ) "#H HΦ".
+  rewrite /counter.
+  wp_alloc l as "Hl".
+  wp_let.
+  wp_bind (inc #l).
+  iApply ("H" $! l 0 with "Hl").
+  iNext.
+  iIntros "%v1 Hl".
+  wp_seq.
+  wp_bind (inc #l).
+  iApply ("H" $! l 1 with "Hl").
+  iNext.
+  iIntros "%v2 Hl".
+  wp_seq.
+  wp_load.
+  by iApply "HΦ".
+Qed.
 
 (* ----------------------------------------------------------------- *)
 (** *** Persistent Points-to *)
@@ -471,7 +488,15 @@ Proof.
   rewrite /par_read.
   (** Both threads have the same postcondition, [t_post]. *)
   set t_post := (λ v, (⌜v = #21⌝)%I : iProp Σ).
-  (* exercise *)
-Admitted.
+  wp_alloc l as "[Hl1 Hl2]".
+  wp_let.
+  wp_pures.
+  wp_apply (wp_par t_post t_post with "[Hl1] [Hl2]").
+  1, 2: wp_load; wp_pures; by iFrame.
+  iIntros (v1 v2) "[-> ->]".
+  iNext.
+  wp_pures.
+  by iApply "HΦ".
+Qed.
 
 End persistently.

@@ -65,8 +65,19 @@ Proof.
     wp_pures.
     by iApply "HΦ".
   - (* Induction step: xs = x :: xs' *)
-    (* exercise *)
-Admitted.
+    iIntros (l) "%Φ H HΦ".
+    iDestruct "H" as "(%hd & %l' & -> & Hhd & Hlist)".
+    wp_rec.
+    wp_load.
+    wp_load.
+    wp_pures.
+    wp_store.
+    iApply (IH with "Hlist").
+    iNext.
+    iIntros "Hlist".
+    iApply "HΦ".
+    by iFrame.
+Qed.
 
 (**
   The append function recursively descends [l1], updating the links.
@@ -97,8 +108,29 @@ Lemma append_spec (l1 l2 : val) (xs ys : list val) :
 Proof.
   revert ys l1 l2.
   induction xs as [| x xs' IH]; simpl.
-  (* exercise *)
-Admitted.
+  - (* Base Case: xs = [] *)
+    iIntros (ys l1 l2) "%Φ [-> Hylist] HΦ".
+    wp_rec.
+    wp_pures.
+    by iApply "HΦ".
+  - (* Induction step: xs = x :: xs' *)
+    iIntros (ys l1 l2) "%Φ H HΦ".
+    iDestruct "H" as "[(%hd & %l1' & -> & Hhd & Hxlist) Hylist]".
+    wp_rec.
+    wp_load.
+    wp_load.
+    wp_pures.
+    wp_bind (append l1' l2). 
+    iApply (IH with "[Hxlist Hylist]").
+    iFrame.
+    iNext.
+    iIntros (l) "Hlist".
+    wp_let.
+    wp_store.
+    wp_pures.
+    iApply "HΦ".
+    by iFrame.
+Qed.
 
 (**
   We will implement reverse using a helper function called
@@ -130,7 +162,19 @@ Lemma reverse_append_spec (l acc : val) (xs ys : list val) :
 Proof.
   revert l acc ys.
   induction xs as [| x xs' IH]; simpl.
-  (* exercise *)
+  - iIntros (l acc ys) "%Φ [-> Hylist] HΦ".
+    rewrite /reverse_append.
+    wp_rec.
+    wp_pures.
+    by iApply "HΦ".
+  - iIntros (l acc ys) "%Φ [(%hd & %l' & %Hl & Hhd & Hxlist) Hylist] HΦ".
+    wp_rec.
+    rewrite Hl.
+    wp_load.
+    wp_load.
+    wp_pures.
+    wp_store.
+    iApply (IH with "[Hxlist Hhd Hylist]").
 Admitted.
 
 (**
